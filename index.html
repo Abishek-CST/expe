@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Expense Tracker</title>
+    
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Boxicons (Icons) -->
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- jsPDF and AutoTable for Exports -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body class="dark-theme">
+
+    <!-- App Container -->
+    <main class="app-container">
+        <!-- Dashboard Screen -->
+        <section id="dashboard" class="screen active">
+            <header>
+                <h1>Dashboard</h1>
+                <div class="user-avatar"><i class='bx bx-user'></i></div>
+            </header>
+            
+            <div class="summary-cards">
+                <div class="card premium-card">
+                    <p class="subtitle">Today's Total Expense</p>
+                    <h2 id="today-total">$0.00</h2>
+                    <div class="monthly-breakdown">
+                        <p>Monthly Total</p>
+                        <h3 id="monthly-total">$0.00</h3>
+                    </div>
+                </div>
+            </div>
+
+            <div class="transactions-section">
+                <div class="section-header">
+                    <h3>Recent Transactions</h3>
+                </div>
+                <div class="transactions-list" id="recent-transactions">
+                    <!-- Transactions injected here via JS -->
+                    <p class="empty-state">No expenses yet. Add one!</p>
+                </div>
+            </div>
+
+            <button class="fab" onclick="window.app.openModal('expenseModal')">
+                <i class='bx bx-plus'></i>
+            </button>
+        </section>
+
+        <!-- Stats Screen -->
+        <section id="stats" class="screen">
+            <header>
+                <h1>Statistics</h1>
+            </header>
+            
+            <div class="tabs">
+                <button class="tab-btn active" onclick="window.app.switchTab(this, 'pie-chart-tab')">Categories</button>
+                <button class="tab-btn" onclick="window.app.switchTab(this, 'bar-chart-tab')">Monthly View</button>
+            </div>
+
+            <div class="tab-content active" id="pie-chart-tab">
+                <div class="chart-container">
+                    <canvas id="categoryPieChart"></canvas>
+                </div>
+            </div>
+
+            <div class="tab-content" id="bar-chart-tab">
+                <div class="chart-container">
+                    <canvas id="monthlyBarChart"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <!-- Loans Screen -->
+        <section id="loans" class="screen">
+            <header>
+                <h1>Loans & Given</h1>
+            </header>
+            <div class="transactions-list" id="loans-list">
+                <!-- Loans injected here via JS -->
+            </div>
+            <button class="fab" onclick="window.app.openModal('loanModal')">
+                <i class='bx bx-plus'></i>
+            </button>
+        </section>
+
+        <!-- Settings Screen -->
+        <section id="settings" class="screen">
+            <header>
+                <h1>Settings</h1>
+            </header>
+            <div class="settings-list">
+                <h3>Budgeting</h3>
+                <div class="setting-item" onclick="window.app.openModal('limitModal')">
+                    <div class="setting-info">
+                        <h4>Monthly Spending Limit</h4>
+                        <p id="current-limit-display">Not set</p>
+                    </div>
+                    <i class='bx bx-edit-alt'></i>
+                </div>
+                
+                <h3>Export & Data</h3>
+                <div class="setting-item" onclick="window.app.exportPDF()">
+                    <div class="setting-info">
+                        <h4 style="color: #ff5252"><i class='bx bxs-file-pdf'></i> Export to PDF</h4>
+                        <p>Download report document</p>
+                    </div>
+                </div>
+                <div class="setting-item" onclick="window.app.exportCSV()">
+                    <div class="setting-info">
+                        <h4 style="color: #69f0ae"><i class='bx border-all'></i> Export to CSV</h4>
+                        <p>Download spreadsheet</p>
+                    </div>
+                </div>
+                <div class="setting-item" onclick="window.app.clearData()">
+                    <div class="setting-info">
+                        <h4 style="color: #ff5252"><i class='bx bx-trash'></i> Clear All Data</h4>
+                        <p>Danger zone</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Bottom Navigation -->
+        <nav class="bottom-nav">
+            <button class="nav-item active" onclick="window.app.navigate('dashboard')">
+                <i class='bx bxs-dashboard'></i>
+                <span>Home</span>
+            </button>
+            <button class="nav-item" onclick="window.app.navigate('stats')">
+                <i class='bx bx-bar-chart-alt-2'></i>
+                <span>Stats</span>
+            </button>
+            <button class="nav-item" onclick="window.app.navigate('loans')">
+                <i class='bx bx-group'></i>
+                <span>Loans</span>
+            </button>
+            <button class="nav-item" onclick="window.app.navigate('settings')">
+                <i class='bx bxs-cog'></i>
+                <span>Settings</span>
+            </button>
+        </nav>
+    </main>
+
+    <!-- Modals Overlay -->
+    <div class="modal-overlay" id="modalOverlay" onclick="window.app.closeModals()"></div>
+
+    <!-- Add Expense Modal -->
+    <div class="modal" id="expenseModal">
+        <div class="modal-header">
+            <h2>Add Expense</h2>
+            <button class="close-btn" onclick="window.app.closeModals()"><i class='bx bx-x'></i></button>
+        </div>
+        <form id="expenseForm" onsubmit="window.app.saveExpense(event)">
+            <div class="form-group">
+                <label>Amount ($)</label>
+                <input type="number" id="exp-amount" step="0.01" required placeholder="0.00">
+            </div>
+            <div class="form-group">
+                <label>Category</label>
+                <select id="exp-category" onchange="window.app.handleCategoryChange(this.value)" required>
+                    <option value="Food">Food</option>
+                    <option value="Yogurt">Yogurt</option>
+                    <option value="Drinks">Drinks</option>
+                    <option value="Plantea">Plantea</option>
+                    <option value="Nescafe">Nescafe</option>
+                    <option value="Travel">Travel</option>
+                    <option value="Other">Other...</option>
+                </select>
+            </div>
+            <div class="form-group" id="exp-custom-group" style="display: none;">
+                <label>Custom Category</label>
+                <input type="text" id="exp-custom" placeholder="Title">
+            </div>
+            <div class="form-group">
+                <label>Date</label>
+                <input type="date" id="exp-date" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Save Expense</button>
+        </form>
+    </div>
+
+    <!-- Add Loan Modal -->
+    <div class="modal" id="loanModal">
+        <div class="modal-header">
+            <h2>Add Loan/Transaction</h2>
+            <button class="close-btn" onclick="window.app.closeModals()"><i class='bx bx-x'></i></button>
+        </div>
+        <form id="loanForm" onsubmit="window.app.saveLoan(event)">
+            <div class="type-toggle">
+                <input type="radio" name="loanType" id="type-gave" value="gave" checked>
+                <label for="type-gave">I Gave</label>
+                <input type="radio" name="loanType" id="type-borrowed" value="borrowed">
+                <label for="type-borrowed">I Borrowed</label>
+            </div>
+            <div class="form-group">
+                <label>Person Name</label>
+                <input type="text" id="loan-person" required placeholder="Name">
+            </div>
+            <div class="form-group">
+                <label>Amount ($)</label>
+                <input type="number" id="loan-amount" step="0.01" required placeholder="0.00">
+            </div>
+            <div class="form-group">
+                <label>Notes</label>
+                <input type="text" id="loan-notes" placeholder="Optional notes">
+            </div>
+            <button type="submit" class="btn btn-primary">Save Record</button>
+        </form>
+    </div>
+
+    <!-- Limit Modal -->
+    <div class="modal" id="limitModal">
+        <div class="modal-header">
+            <h2>Set Warning Limit</h2>
+            <button class="close-btn" onclick="window.app.closeModals()"><i class='bx bx-x'></i></button>
+        </div>
+        <form id="limitForm" onsubmit="window.app.saveLimit(event)">
+            <div class="form-group">
+                <label>Monthly Limit ($)</label>
+                <input type="number" id="limit-amount" step="0.01" placeholder="Leave blank to disable">
+            </div>
+            <button type="submit" class="btn btn-primary">Save Limit</button>
+        </form>
+    </div>
+
+    <!-- Notification Toast -->
+    <div id="toast" class="toast">Limit Warning!</div>
+
+    <script src="app.js"></script>
+</body>
+</html>
