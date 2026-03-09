@@ -36,10 +36,10 @@
             <div class="summary-cards">
                 <div class="card premium-card">
                     <p class="subtitle">Today's Total Expense</p>
-                    <h2 id="today-total">$0.00</h2>
+                    <h2 id="today-total">Rs. 0.00</h2>
                     <div class="monthly-breakdown">
                         <p>Monthly Total</p>
-                        <h3 id="monthly-total">$0.00</h3>
+                        <h3 id="monthly-total">Rs. 0.00</h3>
                     </div>
                 </div>
             </div>
@@ -102,16 +102,51 @@
                 <h1>Settings</h1>
             </header>
             <div class="settings-list">
+                <h3>Security</h3>
+                <div class="setting-item" onclick="window.app.setupPin()">
+                    <div class="setting-info">
+                        <h4><i class='bx bx-lock-alt'></i> Create / Change PIN</h4>
+                        <p id="pin-status-display">Not Set</p>
+                    </div>
+                </div>
+                <div class="setting-item" onclick="window.app.removePin()" id="remove-pin-btn" style="display: none;">
+                    <div class="setting-info">
+                        <h4 style="color: #ff5252"><i class='bx bx-lock-open-alt'></i> Remove PIN</h4>
+                        <p>Disable app lock</p>
+                    </div>
+                </div>
+
                 <h3>Budgeting</h3>
                 <div class="setting-item" onclick="window.app.openModal('limitModal')">
                     <div class="setting-info">
-                        <h4>Monthly Spending Limit</h4>
+                        <h4><i class='bx bx-wallet'></i> Monthly Spending Limit</h4>
                         <p id="current-limit-display">Not set</p>
                     </div>
                     <i class='bx bx-edit-alt'></i>
                 </div>
                 
+                <h3>Reminders</h3>
+                <div class="setting-item" onclick="window.app.toggleReminders()">
+                    <div class="setting-info">
+                        <h4><i class='bx bx-bell'></i> Loan Reminders</h4>
+                        <p id="reminder-status-display">Disabled</p>
+                    </div>
+                </div>
+
                 <h3>Export & Data</h3>
+                <div class="setting-item" onclick="window.app.backupData()">
+                    <div class="setting-info">
+                        <h4 style="color: #6200EE"><i class='bx bx-download'></i> Backup Data</h4>
+                        <p>Save JSON backup</p>
+                    </div>
+                </div>
+                <div class="setting-item" onclick="document.getElementById('restore-file').click()">
+                    <div class="setting-info">
+                        <h4 style="color: #03DAC6"><i class='bx bx-upload'></i> Restore Data</h4>
+                        <p>Load JSON backup</p>
+                    </div>
+                    <input type="file" id="restore-file" style="display: none" accept=".json" onchange="window.app.restoreData(event)">
+                </div>
                 <div class="setting-item" onclick="window.app.exportPDF()">
                     <div class="setting-info">
                         <h4 style="color: #ff5252"><i class='bx bxs-file-pdf'></i> Export to PDF</h4>
@@ -164,8 +199,9 @@
             <button class="close-btn" onclick="window.app.closeModals()"><i class='bx bx-x'></i></button>
         </div>
         <form id="expenseForm" onsubmit="window.app.saveExpense(event)">
+            <input type="hidden" id="exp-edit-id">
             <div class="form-group">
-                <label>Amount ($)</label>
+                <label>Amount (Rs.)</label>
                 <input type="number" id="exp-amount" step="0.01" required placeholder="0.00">
             </div>
             <div class="form-group">
@@ -199,6 +235,7 @@
             <button class="close-btn" onclick="window.app.closeModals()"><i class='bx bx-x'></i></button>
         </div>
         <form id="loanForm" onsubmit="window.app.saveLoan(event)">
+            <input type="hidden" id="loan-edit-id">
             <div class="type-toggle">
                 <input type="radio" name="loanType" id="type-gave" value="gave" checked>
                 <label for="type-gave">I Gave</label>
@@ -210,7 +247,7 @@
                 <input type="text" id="loan-person" required placeholder="Name">
             </div>
             <div class="form-group">
-                <label>Amount ($)</label>
+                <label>Amount (Rs.)</label>
                 <input type="number" id="loan-amount" step="0.01" required placeholder="0.00">
             </div>
             <div class="form-group">
@@ -229,7 +266,7 @@
         </div>
         <form id="limitForm" onsubmit="window.app.saveLimit(event)">
             <div class="form-group">
-                <label>Monthly Limit ($)</label>
+                <label>Monthly Limit (Rs.)</label>
                 <input type="number" id="limit-amount" step="0.01" placeholder="Leave blank to disable">
             </div>
             <button type="submit" class="btn btn-primary">Save Limit</button>
@@ -238,6 +275,46 @@
 
     <!-- Notification Toast -->
     <div id="toast" class="toast">Limit Warning!</div>
+
+    <!-- PIN Setup Modal -->
+    <div class="modal" id="pinModal">
+        <div class="modal-header">
+            <h2 id="pin-modal-title">Set PIN</h2>
+            <button class="close-btn" onclick="window.app.closeModals()"><i class='bx bx-x'></i></button>
+        </div>
+        <form id="pinForm" onsubmit="window.app.savePin(event)">
+            <div class="form-group">
+                <label>Enter 4-Digit PIN</label>
+                <input type="password" id="pin-input" required maxlength="4" pattern="[0-9]{4}" inputmode="numeric" placeholder="****" style="text-align: center; font-size: 24px; letter-spacing: 10px;">
+            </div>
+            <button type="submit" class="btn btn-primary">Save PIN</button>
+        </form>
+    </div>
+
+    <!-- Category Stats Modal -->
+    <div class="modal" id="categoryStatsModal" style="height: 70vh;">
+        <div class="modal-header">
+            <h2 id="category-stats-title">Category Details</h2>
+            <button class="close-btn" onclick="window.app.closeModals()"><i class='bx bx-x'></i></button>
+        </div>
+        <div class="chart-container" style="height: calc(100% - 60px);">
+            <canvas id="categoryDetailedChart"></canvas>
+        </div>
+    </div>
+
+    <!-- Lock Screen Section -->
+    <section id="lock-screen" class="screen" style="z-index: 9999; background-color: var(--bg-color); height: 100vh; position: absolute; top:0; left:0; width:100%;">
+        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; padding-bottom: 20vh;">
+            <i class='bx bx-lock-alt' style="font-size: 64px; color: var(--primary-color); margin-bottom: 24px;"></i>
+            <h2>App Locked</h2>
+            <p style="color: var(--text-secondary); margin-bottom: 32px; font-size: 14px;">Enter your PIN to access</p>
+            
+            <form onsubmit="window.app.unlockApp(event)" style="width: 100%; max-width: 200px; text-align: center;">
+                <input type="password" id="unlock-pin-input" required maxlength="4" inputmode="numeric" placeholder="****" style="width: 100%; padding: 16px; font-size: 24px; letter-spacing: 14px; text-align: center; border-radius: 12px; border: 1px solid var(--primary-color); background: var(--surface-color); color: white; margin-bottom: 24px;">
+                <button type="submit" class="btn btn-primary">Unlock</button>
+            </form>
+        </div>
+    </section>
 
     <script src="app.js"></script>
 </body>
