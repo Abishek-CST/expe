@@ -6,8 +6,8 @@
 // ============================================
 // SUPABASE CONFIGURATION: REPLACE THESE WITH YOUR OWN!
 // ============================================
-const SUPABASE_URL = 'https://your-project-id.supabase.co';
-const SUPABASE_KEY = 'YOUR_ANON_KEY';
+const SUPABASE_URL = 'https://cyonbxdhebqwktigfexp.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_Z9LXbdsEY1EvMaZZmxA9_g_KnEXflAn';
 const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 // ============================================
