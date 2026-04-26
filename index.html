@@ -4,35 +4,37 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Smart Expense Tracker</title>
-    <!-- Fonts: Google Fonts (Outfit) -->
+    <meta name="description" content="A modern, professional expense tracking web application with analytics and charts.">
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <!-- Icons: FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Charts: Chart.js -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- Backend: Supabase -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <!-- Styles -->
     <link rel="stylesheet" href="style.css">
 </head>
-<body class="light-mode">
-    <div class="app-container">
-        <!-- Sidebar Navigation -->
-        <nav class="sidebar">
+<body>
+    <div id="app" class="app-container">
+        <!-- Sidebar -->
+        <nav class="sidebar" id="sidebar">
             <div class="logo">
                 <i class="fa-solid fa-wallet"></i>
                 <span>SmartTrack</span>
             </div>
             <ul class="nav-links">
-                <li class="active" data-section="dashboard"><i class="fa-solid fa-chart-pie"></i> Dashboard</li>
-                <li data-section="transactions"><i class="fa-solid fa-list-ul"></i> Transactions</li>
-                <li data-section="analytics"><i class="fa-solid fa-chart-line"></i> Analytics</li>
+                <li class="active" data-page="dashboard">
+                    <i class="fa-solid fa-chart-pie"></i> <span>Dashboard</span>
+                </li>
+                <li data-page="transactions">
+                    <i class="fa-solid fa-list-ul"></i> <span>Transactions</span>
+                </li>
+                <li data-page="analytics">
+                    <i class="fa-solid fa-chart-line"></i> <span>Analytics</span>
+                </li>
             </ul>
             <div class="sidebar-bottom">
-                <button id="themeToggle" class="btn-icon" aria-label="Toggle Dark Mode">
-                    <i class="fa-solid fa-moon"></i>
+                <button id="btnThemeToggle" class="btn-icon" title="Toggle Dark Mode">
+                    <i class="fa-solid fa-moon" id="themeIcon"></i>
                 </button>
-                <button id="settingsBtn" class="btn-icon" aria-label="Settings">
+                <button id="btnSettings" class="btn-icon" title="Settings">
                     <i class="fa-solid fa-gear"></i>
                 </button>
             </div>
@@ -40,168 +42,137 @@
 
         <!-- Main Content -->
         <main class="main-content">
-            <header class="top-header">
+            <!-- Top Bar -->
+            <header class="top-bar">
                 <div>
                     <h1 id="pageTitle">Dashboard</h1>
-                    <p class="subtitle" id="currentDateDisplay">Welcome back! Here's your financial overview.</p>
+                    <p class="subtitle" id="dateSubtitle"></p>
                 </div>
-                <div class="header-actions">
-                    <button id="addExpenseBtn" class="btn btn-primary">
-                        <i class="fa-solid fa-plus"></i> Add Expense
-                    </button>
-                </div>
+                <button id="btnAddExpense" class="btn btn-primary">
+                    <i class="fa-solid fa-plus"></i> Add Expense
+                </button>
             </header>
 
-            <!-- Dashboard Section -->
-            <section id="dashboard" class="content-section active">
+            <!-- Page: Dashboard -->
+            <div id="pageDashboard" class="page active">
                 <div class="summary-cards">
-                    <div class="card summary-card gradient-primary">
+                    <div class="card summary-card card-gradient">
                         <div class="card-icon"><i class="fa-solid fa-coins"></i></div>
                         <div class="card-info">
-                            <h3>Total Expenses</h3>
-                            <h2 id="totalExpenses">$0.00</h2>
+                            <span class="card-label">Total Expenses</span>
+                            <span class="card-value" id="valTotalExpenses">$0.00</span>
                         </div>
                     </div>
                     <div class="card summary-card">
-                        <div class="card-icon"><i class="fa-solid fa-calendar-alt"></i></div>
+                        <div class="card-icon icon-blue"><i class="fa-solid fa-calendar-alt"></i></div>
                         <div class="card-info">
-                            <h3>This Month</h3>
-                            <h2 id="monthlyExpenses">$0.00</h2>
+                            <span class="card-label">This Month</span>
+                            <span class="card-value" id="valMonthlyExpenses">$0.00</span>
                         </div>
                     </div>
-                    <div class="card summary-card budget-card">
-                        <div class="card-icon"><i class="fa-solid fa-bullseye"></i></div>
+                    <div class="card summary-card">
+                        <div class="card-icon icon-green"><i class="fa-solid fa-bullseye"></i></div>
                         <div class="card-info">
-                            <h3>Monthly Budget</h3>
-                            <h2 id="monthlyBudget">$0.00</h2>
-                            <div class="progress-bar-container">
-                                <div class="progress-bar" id="budgetProgress"></div>
-                            </div>
-                            <p id="budgetWarning" class="warning-text hidden">Nearing budget limit!</p>
+                            <span class="card-label">Monthly Budget</span>
+                            <span class="card-value" id="valBudget">$0.00</span>
+                            <div class="budget-bar"><div class="budget-bar-fill" id="budgetBarFill"></div></div>
+                            <span class="budget-warning" id="budgetWarning"></span>
                         </div>
                     </div>
                 </div>
 
-                <div class="dashboard-charts">
-                    <div class="card chart-container">
+                <div class="charts-row">
+                    <div class="card chart-card">
                         <h3><i class="fa-solid fa-chart-pie"></i> Spending by Category</h3>
-                        <canvas id="categoryChart"></canvas>
+                        <div class="chart-wrapper"><canvas id="chartPie"></canvas></div>
                     </div>
-                    <div class="card chart-container">
+                    <div class="card chart-card chart-card-wide">
                         <h3><i class="fa-solid fa-chart-column"></i> Monthly Trends</h3>
-                        <canvas id="trendChart"></canvas>
+                        <div class="chart-wrapper"><canvas id="chartBar"></canvas></div>
                     </div>
                 </div>
 
-                <div class="recent-transactions card">
-                    <div class="card-header">
-                        <h3><i class="fa-solid fa-clock-rotate-left"></i> Recent Transactions</h3>
-                        <button class="btn btn-text goto-transactions">View All</button>
-                    </div>
-                    <div class="table-responsive">
-                        <table id="recentTransactionsTable">
-                            <thead>
-                                <tr>
-                                    <th>Date</th>
-                                    <th>Description</th>
-                                    <th>Category</th>
-                                    <th>Amount</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <!-- Inserted dynamically -->
-                            </tbody>
-                        </table>
-                        <div id="emptyRecentState" class="empty-state hidden">
-                            <i class="fa-regular fa-folder-open"></i>
-                            <p>No recent transactions.</p>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Transactions Section -->
-            <section id="transactions" class="content-section hidden">
-                <div class="transactions-header card">
-                    <div class="filters">
-                        <input type="text" id="searchInput" placeholder="Search description..." class="input-field">
-                        <select id="categoryFilter" class="input-field">
-                            <option value="All">All Categories</option>
-                            <option value="Food">Food</option>
-                            <option value="Transport">Transport</option>
-                            <option value="Bills">Bills</option>
-                            <option value="Entertainment">Entertainment</option>
-                            <option value="Health">Health</option>
-                            <option value="Other">Other</option>
-                        </select>
-                        <input type="month" id="monthFilter" class="input-field">
-                    </div>
-                    <div class="transaction-actions">
-                        <button id="exportCsvBtn" class="btn btn-secondary"><i class="fa-solid fa-file-csv"></i> Export</button>
-                        <button id="clearDataBtn" class="btn btn-danger"><i class="fa-solid fa-trash-can"></i> Clear All</button>
-                    </div>
-                </div>
-                
                 <div class="card">
-                    <div class="table-responsive">
-                        <table id="allTransactionsTable">
-                            <thead>
-                                <tr>
-                                    <th>Date</th>
-                                    <th>Description</th>
-                                    <th>Category</th>
-                                    <th>Amount</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <!-- Inserted dynamically -->
-                            </tbody>
-                        </table>
-                        <div id="emptyTransactionsState" class="empty-state hidden">
-                            <i class="fa-regular fa-folder-open"></i>
-                            <p>No transactions match your filters.</p>
-                        </div>
+                    <div class="card-row">
+                        <h3><i class="fa-solid fa-clock-rotate-left"></i> Recent Transactions</h3>
+                        <button class="btn btn-text" id="btnViewAll">View All</button>
+                    </div>
+                    <table class="data-table" id="tableRecent">
+                        <thead><tr><th>Date</th><th>Description</th><th>Category</th><th>Amount</th></tr></thead>
+                        <tbody></tbody>
+                    </table>
+                    <div class="empty-state" id="emptyRecent" style="display:none;">
+                        <i class="fa-regular fa-folder-open"></i><p>No recent transactions yet.</p>
                     </div>
                 </div>
-            </section>
+            </div>
 
-            <!-- Analytics Section -->
-            <section id="analytics" class="content-section hidden">
-                <div class="card chart-container large-chart">
-                    <h3><i class="fa-solid fa-chart-line"></i> Expense History (Line Trend)</h3>
-                    <canvas id="historyLineChart"></canvas>
+            <!-- Page: Transactions -->
+            <div id="pageTransactions" class="page">
+                <div class="card filter-bar">
+                    <input type="text" id="filterSearch" placeholder="Search description..." class="input">
+                    <select id="filterCategory" class="input">
+                        <option value="All">All Categories</option>
+                        <option value="Food">Food</option>
+                        <option value="Transport">Transport</option>
+                        <option value="Bills">Bills</option>
+                        <option value="Entertainment">Entertainment</option>
+                        <option value="Health">Health</option>
+                        <option value="Other">Other</option>
+                    </select>
+                    <input type="month" id="filterMonth" class="input">
+                    <div class="filter-actions">
+                        <button id="btnExportCsv" class="btn btn-secondary"><i class="fa-solid fa-file-csv"></i> Export</button>
+                        <button id="btnClearAll" class="btn btn-danger"><i class="fa-solid fa-trash-can"></i> Clear All</button>
+                    </div>
                 </div>
-                <div class="analytics-insights card">
+                <div class="card">
+                    <table class="data-table" id="tableAll">
+                        <thead><tr><th>Date</th><th>Description</th><th>Category</th><th>Amount</th><th>Actions</th></tr></thead>
+                        <tbody></tbody>
+                    </table>
+                    <div class="empty-state" id="emptyAll" style="display:none;">
+                        <i class="fa-regular fa-folder-open"></i><p>No transactions found.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Page: Analytics -->
+            <div id="pageAnalytics" class="page">
+                <div class="card chart-card chart-card-full">
+                    <h3><i class="fa-solid fa-chart-line"></i> Expense History</h3>
+                    <div class="chart-wrapper chart-wrapper-tall"><canvas id="chartLine"></canvas></div>
+                </div>
+                <div class="card">
                     <h3><i class="fa-solid fa-lightbulb"></i> Spending Insights</h3>
-                    <ul id="insightsList">
-                        <!-- Inserted dynamically -->
+                    <ul class="insights-list" id="insightsList">
+                        <li><i class="fa-solid fa-circle-info"></i> Add some expenses to see insights.</li>
                     </ul>
                 </div>
-            </section>
+            </div>
         </main>
     </div>
 
-    <!-- Add Expense Modal -->
-    <div id="expenseModal" class="modal-overlay">
-        <div class="modal">
+    <!-- MODAL: Add / Edit Expense -->
+    <div id="modalExpense" class="modal-backdrop" style="display:none;">
+        <div class="modal-box">
             <div class="modal-header">
-                <h2 id="modalTitle">Add Expense</h2>
-                <button class="close-modal btn-icon"><i class="fa-solid fa-xmark"></i></button>
+                <h2 id="modalExpenseTitle">Add Expense</h2>
+                <button class="btn-icon btn-close-modal" data-close="modalExpense"><i class="fa-solid fa-xmark"></i></button>
             </div>
-            <form id="expenseForm">
-                <input type="hidden" id="expenseId">
+            <form id="formExpense">
+                <input type="hidden" id="inputExpenseId">
                 <div class="form-group">
-                    <label for="expenseAmount">Amount ($)</label>
-                    <input type="number" id="expenseAmount" step="0.01" min="0.01" required class="input-field" placeholder="0.00">
+                    <label for="inputAmount">Amount ($)</label>
+                    <input type="number" id="inputAmount" step="0.01" min="0.01" required class="input" placeholder="0.00">
                 </div>
                 <div class="form-group">
-                    <label for="expenseDescription">Description</label>
-                    <input type="text" id="expenseDescription" required class="input-field" placeholder="e.g. Groceries">
+                    <label for="inputDescription">Description</label>
+                    <input type="text" id="inputDescription" required class="input" placeholder="e.g. Groceries">
                 </div>
                 <div class="form-group">
-                    <label for="expenseCategory">Category</label>
-                    <select id="expenseCategory" required class="input-field">
+                    <label for="inputCategory">Category</label>
+                    <select id="inputCategory" required class="input">
                         <option value="" disabled selected>Select Category</option>
                         <option value="Food">Food</option>
                         <option value="Transport">Transport</option>
@@ -212,42 +183,39 @@
                     </select>
                 </div>
                 <div class="form-group">
-                    <label for="expenseDate">Date</label>
-                    <input type="date" id="expenseDate" required class="input-field">
+                    <label for="inputDate">Date</label>
+                    <input type="date" id="inputDate" required class="input">
                 </div>
-                <div class="modal-actions">
-                    <button type="button" class="btn btn-secondary close-modal">Cancel</button>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary btn-close-modal" data-close="modalExpense">Cancel</button>
                     <button type="submit" class="btn btn-primary">Save Expense</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- Settings Modal -->
-    <div id="settingsModal" class="modal-overlay">
-        <div class="modal">
+    <!-- MODAL: Settings -->
+    <div id="modalSettings" class="modal-backdrop" style="display:none;">
+        <div class="modal-box">
             <div class="modal-header">
                 <h2>Settings</h2>
-                <button class="close-modal btn-icon"><i class="fa-solid fa-xmark"></i></button>
+                <button class="btn-icon btn-close-modal" data-close="modalSettings"><i class="fa-solid fa-xmark"></i></button>
             </div>
-            <form id="settingsForm">
+            <form id="formSettings">
                 <div class="form-group">
-                    <label for="budgetInput">Monthly Budget Limit ($)</label>
-                    <input type="number" id="budgetInput" step="1" min="0" required class="input-field" placeholder="1000">
+                    <label for="inputBudget">Monthly Budget Limit ($)</label>
+                    <input type="number" id="inputBudget" step="1" min="0" required class="input" placeholder="1000">
                 </div>
-                <div class="form-group">
-                    <p class="setting-hint">Use the toggle in the sidebar to switch between Light and Dark mode. Supabase connection is managed in script.js.</p>
-                </div>
-                <div class="modal-actions">
-                    <button type="button" class="btn btn-secondary close-modal">Cancel</button>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary btn-close-modal" data-close="modalSettings">Cancel</button>
                     <button type="submit" class="btn btn-primary">Save Settings</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- Toast Notifications -->
-    <div id="toastContainer" class="toast-container"></div>
+    <!-- Toast Container -->
+    <div id="toastBox" class="toast-box"></div>
 
     <script src="script.js"></script>
 </body>
