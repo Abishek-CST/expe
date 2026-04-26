@@ -442,12 +442,16 @@ class UIController {
 const manager = new ExpenseManager();
 const ui = new UIController(manager);
 
-document.addEventListener('DOMContentLoaded', async () => {
-    // 1. Initialize data from Supabase
-    await manager.init();
+document.addEventListener('DOMContentLoaded', () => {
+    // 1. Initial UI Render (Empty State)
     ui.render();
 
-    // 2. Navigation
+    // 2. Background Data Initialization
+    manager.init().then(() => {
+        ui.render(); // Re-render with real data!
+    });
+
+    // 3. Navigation Bindings
     document.querySelectorAll('.nav-links li').forEach(li => {
         li.addEventListener('click', (e) => {
             // Update active state in nav
